@@ -24,31 +24,45 @@ import {
   Modal,
 } from "@mui/material";
 
+import { useHistory } from "react-router";
+
 import ReactCardFlip from "react-card-flip";
 
 import { useEffect, useState, useReducer } from "react";
 
 function Main(props) {
-  const level = props.location.state.player.level;
-  const grid = props.location.state.player.level * 2;
+  //const continueGame, level, grid, numberOfCards, numberOfIcons, timeLimitInMs, players;
+
+  const continueGame = props.location.state.continue;
+  const level = continueGame ? props.location.state.player.level : 1;
+  const grid = level * 2;
   const numberOfCards = Math.pow(grid, 2);
   const numberOfIcons = 4040;
   //ne trebaju mi ms
   const timeLimitInMs = (numberOfCards / 2) * 60000;
+  const players = props.location.state.players;
 
   const [cards, setCards] = useState([]);
   const [pending, setPending] = useState(false);
   const [firstCardClicked, setFirstCardClicked] = useState();
   const [secondCardClicked, setSecondCardClicked] = useState();
   const [currentTimeInMs, setCurrentTimeInMs] = useState(timeLimitInMs);
-  const [score, setScore] = useState(props.location.state.player.score);
+  const [score, setScore] = useState(
+    continueGame ? props.location.state.player.score : 0
+  );
   const [cardsLeft, setCardsLeft] = useState(numberOfCards);
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
+  const history = useHistory();
+
   useEffect(() => {
     setCards(generateRandomCardsCodesArray(numberOfCards));
   }, []);
+
+  const onTimeOut = () => {
+    setCurrentTimeInMs(0);
+  };
 
   function createCardCodeFromRandomNumber(randomNumber) {
     let cardCode = String(randomNumber);
@@ -67,7 +81,7 @@ function Main(props) {
   //shuffle implicira random
   function randomlyShuffleArray(array) {
     let currentIndex = array.length;
-      let randomIndex;
+    let randomIndex;
 
     while (currentIndex !== 0) {
       randomIndex = Math.floor(Math.random() * currentIndex);
@@ -85,6 +99,7 @@ function Main(props) {
   const generateRandomCardsCodesArray = (numberOfCards) => {
     let cardsCodes = new Set();
 
+    //<= umjesto !=
     while (cardsCodes.size != numberOfCards / 2) {
       cardsCodes.add(
         createCardCodeFromRandomNumber(
@@ -100,6 +115,7 @@ function Main(props) {
 
     const cards = [];
 
+    //onScreen -> nesto kao found flipped
     cardsCodes.forEach((code, index) => {
       cards.push({ code, index, clicked: false, onScreen: true });
     });
@@ -112,8 +128,78 @@ function Main(props) {
       <Modal
         shouldCloseOnOverlayClick={false}
         open={!cardsLeft || !currentTimeInMs}
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
-        <div>{score}</div>
+        <Card
+          sx={{ width: 0.6, height: 0.6, outline: "none", textAlign: "center" }}
+        >
+          <Typography
+            id="modal-modal-title"
+            variant="h4"
+            sx={{ marginTop: "7%" }}
+            component="h4"
+          >
+            {`Congratulations! Level ${level + 1} is your new challenge.`}
+          </Typography>
+          <Button
+            sx={{ marginRight: 0.5 }}
+            color="secondary"
+            variant="outlined"
+            onClick={() => {
+              const player = props.location.state.player;
+
+              player.score = 0;
+              player.level = 1;
+              const index = players.indexOf(
+                players.find(
+                  (currentPlayer) => currentPlayer.name === player.name
+                )
+              );
+              if (index === -1) players[0] = player;
+              else players[index] = player;
+              localStorage.setItem("players", JSON.stringfiy(players));
+              history.go(0);
+              props.history.push({
+                pathname: "/main",
+                state: { player, continue: false, players },
+              });
+            }}
+          >
+            NEW GAME
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              const player = props.location.state.player;
+              if (!cardsLeft) {
+                player.score = score;
+                player.level = level + 1;
+
+                const index = players.indexOf(
+                  players.find(
+                    (currentPlayer) => currentPlayer.name === player.name
+                  )
+                );
+                if (index === -1) players[0] = player;
+                else players[index] = player;
+
+                localStorage.setItem("players", JSON.stringify(players));
+              }
+              history.go(0);
+              props.history.push({
+                pathname: "/main",
+                state: { player, continue: true, players },
+              });
+            }}
+          >
+            {!cardsLeft ? "CONTINUE" : "TRY AGAIN"}
+          </Button>
+        </Card>
       </Modal>
       <Box
         display="flex"
@@ -263,6 +349,7 @@ function Main(props) {
             miliseconds={timeLimitInMs}
             setCurrentTimeInMsInParentComponent={setCurrentTimeInMs}
             stopCountdown={!cardsLeft}
+            onTimeOut={onTimeOut}
           />
         </Grid>
       </Box>

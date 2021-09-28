@@ -15,11 +15,12 @@ import { getThemeProps } from "@mui/system";
 
 function Home(props) {
   const [playersName, setPlayersName] = useState("");
+  //u hook
   const [players, setPlayers] = useState(
     JSON.parse(localStorage.getItem("players")) || []
   );
 
-  //Pitanje, proslijediti players ili direktno koristiti state
+  //koristiti find funkciju
   const getPlayer = (name) => {
     for (let i = 0; i < players.length; i++)
       if (players[i].name === name) return players[i];
@@ -64,7 +65,7 @@ function Home(props) {
 
                 props.history.push({
                   pathname: "/main",
-                  state: { player, continue: false },
+                  state: { player, continue: false, players },
                 });
               }
             }}
@@ -81,7 +82,7 @@ function Home(props) {
                 const player = getPlayer(playersName);
                 props.history.push({
                   pathname: "/main",
-                  state: { player, continue: true },
+                  state: { player, continue: true, players },
                 });
               }
             }}
