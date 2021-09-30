@@ -154,14 +154,15 @@ function Main(props) {
 
               player.score = 0;
               player.level = 1;
-              const index = players.indexOf(
-                players.find(
-                  (currentPlayer) => currentPlayer.name === player.name
-                )
+
+              const index = players.find(
+                (currentPlayer) => currentPlayer.name === player.name
               );
-              if (index === -1) players[0] = player;
+
+              if (!index) players.push(player);
               else players[index] = player;
-              localStorage.setItem("players", JSON.stringfiy(players));
+
+              localStorage.setItem("players", JSON.stringify(players));
               history.go(0);
               props.history.push({
                 pathname: "/main",
@@ -175,19 +176,23 @@ function Main(props) {
             variant="outlined"
             color="secondary"
             onClick={() => {
-              const player = props.location.state.player;
+              let player = props.location.state.player;
               if (!cardsLeft) {
                 player.score = score;
                 player.level = level + 1;
 
-                const index = players.indexOf(
-                  players.find(
-                    (currentPlayer) => currentPlayer.name === player.name
-                  )
-                );
-                if (index === -1) players[0] = player;
-                else players[index] = player;
+                console.log(player);
+                console.log(players);
 
+                const index = players.find(
+                  (currentPlayer) => currentPlayer.name === player.name
+                );
+                console.log(index);
+                if (!index) {
+                  players.push(player);
+                } else players[index] = player;
+
+                console.log(players);
                 localStorage.setItem("players", JSON.stringify(players));
               }
               history.go(0);
